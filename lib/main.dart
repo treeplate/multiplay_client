@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             size = buffer.readUint8List(2);
             rawPlayers = buffer.readUint8List(playerCount * 2);
-            rawObjects = buffer.readUint8List(playerCount * 2);
+            rawObjects = buffer.readUint8List(objectCount * 2);
             goal = buffer.readUint8List(2);
           });
         }
