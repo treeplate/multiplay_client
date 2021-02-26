@@ -47,12 +47,15 @@ class _MyHomePageState extends State<MyHomePage> {
       if (buffer.available >= 16) {
         int playerCount = buffer.readInt64();
         int objectCount = buffer.readInt64();
+        buffer.rewind();
         if (buffer.available >= 2 + playerCount * 2 + objectCount * 2 + 2) {
+          buffer.readUint8List(16);
           setState(() {
             size = buffer.readUint8List(2);
             rawPlayers = buffer.readUint8List(playerCount * 2);
             rawObjects = buffer.readUint8List(objectCount * 2);
             goal = buffer.readUint8List(2);
+            buffer.checkpoint();
           });
         }
       }
@@ -84,21 +87,37 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(
-                  4,
-                  (i) => TextButton(
-                    onPressed: () {
-                      server.add([playerIndex, i + 1]);
-                    },
-                    child: Text(buttons[i]),
-                  ),
-                ) +
-                [
+    return FocusScope(
+      child: Focus(
+        autofocus: true,
+        onKey: (
+          FocusNode x,
+          RawKeyEvent e,
+        ) {
+          switch (e.character) {
+            case "d":
+              server.add([playerIndex, 1]);
+              break;
+            case "a":
+              server.add([playerIndex, 2]);
+              break;
+            case "s":
+              server.add([playerIndex, 3]);
+              break;
+            case "w":
+              server.add([playerIndex, 4]);
+              break;
+            default:
+              return false;
+          }
+          return true;
+        },
+        child: Scaffold(
+          body: Row(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
                   TextButton(
                     onPressed: () {
                       playerIndex++;
@@ -116,18 +135,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text("Decrement player index"),
                   ),
                 ],
-          ),
-          Expanded(
-            child: Container(
-              color: Colors.black,
-              child: CustomPaint(
-                painter: WorldDrawer(
-                    Size(size[0] / 1, size[1] / 1), players, objects, goal),
-                child: SizedBox.expand(),
               ),
-            ),
+              Expanded(
+                child: Container(
+                  color: Colors.black,
+                  child: CustomPaint(
+                    painter: WorldDrawer(
+                        Size(size[0] / 1, size[1] / 1), players, objects, goal),
+                    child: SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -145,6 +166,7 @@ class WorldDrawer extends CustomPainter {
   @override
   void paint(Canvas canvas, Size totalSize) {
     Size worldSize = Size.square(totalSize.shortestSide);
+    print("$worldSize, $size");
     double circleRadius = worldSize.shortestSide / (size.longestSide * 2);
     print("wSize: $worldSize, totSize: $totalSize");
     var topLeft = Offset((totalSize.width - worldSize.width) / 2,
@@ -155,6 +177,7 @@ class WorldDrawer extends CustomPainter {
       Offset offset = players[i];
       Random r = Random(i);
       if (playerIndex == i) {
+        print("$topLeft, $circleRadius, $offset");
         canvas.drawCircle(
             topLeft +
                 (offset * circleRadius * 2) +
@@ -179,9 +202,10 @@ class WorldDrawer extends CustomPainter {
       );
     }
     canvas.drawRect(
-        topLeft + (Offset(goal[0]/1, goal[1]/1) * circleRadius * 2) & Size.square(circleRadius * 2),
-        Paint()..color = Colors.lightGreen,
-      );
+      topLeft + (Offset(goal[0] / 1, goal[1] / 1) * circleRadius * 2) &
+          Size.square(circleRadius * 2),
+      Paint()..color = Colors.lightGreen,
+    );
   }
 
   @override
