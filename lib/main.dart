@@ -27,8 +27,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-List<String> buttons = ["right", "left", "down", "up"];
-
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key /*?*/ key, this.title}) : super(key: key);
 
@@ -94,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
           FocusNode x,
           RawKeyEvent e,
         ) {
+          //print("got $e");
           switch (e.character) {
             case "d":
               server.add([playerIndex, 1]);
@@ -107,46 +106,27 @@ class _MyHomePageState extends State<MyHomePage> {
             case "w":
               server.add([playerIndex, 4]);
               break;
+            case "+":
+              playerIndex++;
+              server.add([playerIndex, 0]);
+              break;
+            case "-":
+              playerIndex--;
+              server.add([playerIndex, 0]);
+              break;
             default:
               return false;
           }
           return true;
         },
         child: Scaffold(
-          body: Row(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      playerIndex++;
-                      server.add([playerIndex, 0]);
-                    },
-                    child: Text("Increment player index"),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      if (playerIndex > 0) {
-                        playerIndex--;
-                        server.add([playerIndex, 0]);
-                      }
-                    },
-                    child: Text("Decrement player index"),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: Container(
-                  color: Colors.black,
-                  child: CustomPaint(
-                    painter: WorldDrawer(
-                        Size(size[0] / 1, size[1] / 1), players, objects, goal),
-                    child: SizedBox.expand(),
-                  ),
-                ),
-              ),
-            ],
+          body: Container(
+            color: Colors.black,
+            child: CustomPaint(
+              painter: WorldDrawer(
+                  Size(size[0] / 1, size[1] / 1), players, objects, goal),
+              child: SizedBox.expand(),
+            ),
           ),
         ),
       ),
@@ -166,18 +146,18 @@ class WorldDrawer extends CustomPainter {
   @override
   void paint(Canvas canvas, Size totalSize) {
     Size worldSize = Size.square(totalSize.shortestSide);
-    print("$worldSize, $size");
+    //print("$worldSize, $size");
     double circleRadius = worldSize.shortestSide / (size.longestSide * 2);
-    print("wSize: $worldSize, totSize: $totalSize");
+    //print("wSize: $worldSize, totSize: $totalSize");
     var topLeft = Offset((totalSize.width - worldSize.width) / 2,
         (totalSize.height - worldSize.height) / 2);
-    canvas.drawRect(topLeft & worldSize, Paint()..color = Colors.green);
-    print(players);
+    canvas.drawRect(topLeft & worldSize, Paint()..color = Colors.white70);
+    //print(players);
     for (int i = 0; i < players.length; i++) {
       Offset offset = players[i];
       Random r = Random(i);
       if (playerIndex == i) {
-        print("$topLeft, $circleRadius, $offset");
+        //print("$topLeft, $circleRadius, $offset");
         canvas.drawCircle(
             topLeft +
                 (offset * circleRadius * 2) +
