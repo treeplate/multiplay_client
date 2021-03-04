@@ -4,12 +4,16 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:home_automation_tools/all.dart';
+import 'package:just_audio/just_audio.dart';
 
 Socket server;
+AudioPlayer player;
 
 int playerIndex = 0;
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  player = AudioPlayer();
   server = await Socket.connect("ceylon.rooves.house", 9000);
   runApp(MyApp());
 }
@@ -45,15 +49,23 @@ class _MyHomePageState extends State<MyHomePage> {
       if (buffer.available >= 16) {
         int playerCount = buffer.readInt64();
         int objectCount = buffer.readInt64();
+        print("$playerCount, $objectCount");
         buffer.rewind();
-        if (buffer.available >= 2 + playerCount * 2 + objectCount * 2 + 2) {
+        if (buffer.available >= 3 + playerCount * 2 + objectCount * 4 + 2) {
           buffer.readUint8List(16);
           setState(() {
-            size = buffer.readUint8List(2);
+            List<int> someData = buffer.readUint8List(3);
+            size = someData.sublist(0, 2);
+            if (lastLevelPlayed != someData[2]) {
+              lastLevelPlayed = someData[2];
+              print("ASSET SETTING (l$lastLevelPlayed.mov)");
+              player.setAsset("l$lastLevelPlayed.mov").then((Duration duration) => player.play());
+            }
             rawPlayers = buffer.readUint8List(playerCount * 2);
-            rawObjects = buffer.readUint8List(objectCount * 2);
+            rawObjects = buffer.readUint8List(objectCount * 4);
             goal = buffer.readUint8List(2);
             buffer.checkpoint();
+            print("hello...");
           });
         }
       }
@@ -62,6 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<int> goal = [20, 20];
   List<int> size = [0, 0];
+  int lastLevelPlayed = -1;
 
   List<int> rawPlayers = [];
   List<Offset> get players {
@@ -77,7 +90,9 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Offset> get objects {
     List<int> poses = rawObjects;
     List<Offset> result = [];
-    for (int i = 0; i < poses.length; i += 2) {
+    for (int i = 0; i < poses.length; i += 4) {
+      print(poses.sublist(i, i+4));
+      if(poses[i+2] != 0) throw "Unsupported '${poses[i+2]}' type of object"; //TODO: support button and door rendering
       result.add(Offset(poses[i] / 1, poses[i + 1] / 1));
     }
     return result;
@@ -92,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
           FocusNode x,
           RawKeyEvent e,
         ) {
-          //print("got $e");
+          print("got $e");
           switch (e.character) {
             case "d":
               server.add([playerIndex, 1]);
@@ -120,13 +135,35 @@ class _MyHomePageState extends State<MyHomePage> {
           return true;
         },
         child: Scaffold(
-          body: Container(
-            color: Colors.black,
-            child: CustomPaint(
-              painter: WorldDrawer(
-                  Size(size[0] / 1, size[1] / 1), players, objects, goal),
-              child: SizedBox.expand(),
-            ),
+          body: Stack(
+            children: [
+              Container(
+                color: Colors.black,
+                child: CustomPaint(
+                  painter: WorldDrawer(
+                    Size(size[0] / 1, size[1] / 1),
+                    players,
+                    objects,
+                    goal,
+                  ),
+                  child: SizedBox.expand(),
+                ),
+              ),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      child: Text(
+                        "WASD to move",
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      color: Colors.white.withAlpha(50),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

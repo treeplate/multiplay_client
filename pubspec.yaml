@@ -23,6 +23,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  just_audio:
+    '0.6.14+1'
   home_automation_tools:
     git: git://github.com/Hixie/dart-home-automation-tools.git
 
@@ -45,6 +47,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+      - l1.mov
 
   # To add assets to your application, add an assets section, like this:
   # assets:
