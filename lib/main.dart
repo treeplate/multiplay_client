@@ -49,17 +49,22 @@ class _MyHomePageState extends State<MyHomePage> {
       if (buffer.available >= 16) {
         int playerCount = buffer.readInt64();
         int objectCount = buffer.readInt64();
-        print("$playerCount, $objectCount");
+        print(
+            "(${buffer.available}) 3 + $playerCount * 2 + $objectCount * 4 + 2");
         buffer.rewind();
-        if (buffer.available >= 3 + playerCount * 2 + objectCount * 4 + 2) {
+        if (buffer.available >=
+            16 + 3 + playerCount * 2 + objectCount * 4 + 2) {
           buffer.readUint8List(16);
           setState(() {
             List<int> someData = buffer.readUint8List(3);
             size = someData.sublist(0, 2);
             if (lastLevelPlayed != someData[2]) {
               lastLevelPlayed = someData[2];
-              print("ASSET SETTING (l$lastLevelPlayed.mov)");
-              player.setAsset("l$lastLevelPlayed.mov").then((Duration duration) => player.play());
+              String filename =
+                  "audio/level_${lastLevelPlayed.toRadixString(2)}.mov";
+              print("ASSET SETTING ($filename)");
+              player.setAsset(filename)
+                  .then((Duration duration) => player.play());
             }
             rawPlayers = buffer.readUint8List(playerCount * 2);
             rawObjects = buffer.readUint8List(objectCount * 4);
@@ -87,13 +92,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   List<int> rawObjects = [];
-  List<Offset> get objects {
+  List<List<int>> get objects {
     List<int> poses = rawObjects;
-    List<Offset> result = [];
+    List<List<int>> result = [];
     for (int i = 0; i < poses.length; i += 4) {
-      print(poses.sublist(i, i+4));
-      if(poses[i+2] != 0) throw "Unsupported '${poses[i+2]}' type of object"; //TODO: support button and door rendering
-      result.add(Offset(poses[i] / 1, poses[i + 1] / 1));
+      print(poses.sublist(i, i + 4));
+      result.add([poses[i], poses[i + 1], poses[i + 2], poses[i + 3]]);
     }
     return result;
   }
@@ -173,7 +177,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class WorldDrawer extends CustomPainter {
   final List<Offset> players;
-  final List<Offset> objects;
+  final List<List<int>> objects;
   final List<int> goal;
 
   final Size size;
@@ -185,11 +189,33 @@ class WorldDrawer extends CustomPainter {
     Size worldSize = Size.square(totalSize.shortestSide);
     //print("$worldSize, $size");
     double circleRadius = worldSize.shortestSide / (size.longestSide * 2);
+
+    var unitDim = (worldSize.height / size.longestSide);
+    print(worldSize);
+    if (size.longestSide > size.shortestSide)
+      worldSize = size.width > size.height
+          ? Size(worldSize.width, unitDim * size.shortestSide)
+          : Size(unitDim * size.shortestSide, worldSize.height);
     //print("wSize: $worldSize, totSize: $totalSize");
     var topLeft = Offset((totalSize.width - worldSize.width) / 2,
         (totalSize.height - worldSize.height) / 2);
+    print(worldSize);
     canvas.drawRect(topLeft & worldSize, Paint()..color = Colors.white70);
     //print(players);
+    for (int i = 0; i < objects.length; i++) {
+      Offset offset = Offset(objects[i][0] / 1, objects[i][1] / 1);
+      drawObject(
+          Size.square(circleRadius * 2),
+          topLeft + (offset * circleRadius * 2),
+          objects[i][2],
+          objects[i][3],
+          canvas);
+    }
+    canvas.drawRect(
+      topLeft + (Offset(goal[0] / 1, goal[1] / 1) * circleRadius * 2) &
+          Size.square(circleRadius * 2),
+      Paint()..color = Colors.lightGreen,
+    );
     for (int i = 0; i < players.length; i++) {
       Offset offset = players[i];
       Random r = Random(i);
@@ -198,31 +224,51 @@ class WorldDrawer extends CustomPainter {
         canvas.drawCircle(
             topLeft +
                 (offset * circleRadius * 2) +
-                Offset(circleRadius, circleRadius),
-            circleRadius + 1,
+                Offset(circleRadius - 5, circleRadius - 5),
+            circleRadius - 9,
             Paint()..color = Colors.white);
       }
       canvas.drawCircle(
           topLeft +
               (offset * circleRadius * 2) +
-              Offset(circleRadius, circleRadius),
-          circleRadius,
+              Offset(circleRadius - 5, circleRadius - 5),
+          circleRadius - 10,
           Paint()
             ..color = Color.fromARGB(
                 0xFF, r.nextInt(0xFF), r.nextInt(0xFF), r.nextInt(0xFF)));
     }
-    for (int i = 0; i < objects.length; i++) {
-      Offset offset = objects[i];
-      canvas.drawRect(
-        topLeft + (offset * circleRadius * 2) & Size.square(circleRadius * 2),
-        Paint()..color = Colors.black,
-      );
+  }
+
+  void drawObject(Size size, Offset pos, int type, int data, Canvas canvas) {
+    switch (type) {
+      case 0:
+        canvas.drawRect(
+          pos & size,
+          Paint()..color = Colors.black,
+        );
+        break;
+      case 1:
+        canvas.drawRect(pos & size, Paint()..color = Colors.red);
+        break;
+      case 2:
+        if (data == 0)
+          canvas.drawLine(
+              size.bottomLeft(pos),
+              size.topLeft(pos),
+              Paint()
+                ..color = Colors.brown
+                ..strokeWidth = 10);
+        else
+          canvas.drawLine(
+              size.bottomLeft(pos),
+              size.bottomRight(pos),
+              Paint()
+                ..color = Colors.brown
+                ..strokeWidth = 10);
+        break;
+      default:
+        throw "Unsupported '$type' type of object";
     }
-    canvas.drawRect(
-      topLeft + (Offset(goal[0] / 1, goal[1] / 1) * circleRadius * 2) &
-          Size.square(circleRadius * 2),
-      Paint()..color = Colors.lightGreen,
-    );
   }
 
   @override

@@ -48,7 +48,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-      - l1.mov
+    - audio/level_1.mov
+    - audio/level_10.mov
 
   # To add assets to your application, add an assets section, like this:
   # assets:
