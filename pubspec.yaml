@@ -50,6 +50,7 @@ flutter:
   assets:
     - audio/level_1.mov
     - audio/level_10.mov
+    - pixelart/button.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

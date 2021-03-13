@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:home_automation_tools/all.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -41,7 +42,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  _MyHomePageState() {
+  ImageInfo _imageInfo;
+  void initState() {
+    super.initState();
+    ExactAssetImage('pixelart/button.png').resolve(ImageConfiguration(bundle: rootBundle)).addListener(ImageStreamListener((ImageInfo imageInfo, bool syncronous) {
+      setState(() {
+        _imageInfo = imageInfo;
+      });
+    }));
     final PacketBuffer buffer = PacketBuffer();
     server.add([playerIndex, 0]);
     server.listen((List<int> message) {
@@ -149,6 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     players,
                     objects,
                     goal,
+                    _imageInfo,
                   ),
                   child: SizedBox.expand(),
                 ),
@@ -182,7 +191,9 @@ class WorldDrawer extends CustomPainter {
 
   final Size size;
 
-  WorldDrawer(this.size, this.players, this.objects, this.goal);
+  WorldDrawer(this.size, this.players, this.objects, this.goal, this.imageInfo);
+  
+  ImageInfo imageInfo;
 
   @override
   void paint(Canvas canvas, Size totalSize) {
@@ -224,22 +235,22 @@ class WorldDrawer extends CustomPainter {
         canvas.drawCircle(
             topLeft +
                 (offset * circleRadius * 2) +
-                Offset(circleRadius - 5, circleRadius - 5),
-            circleRadius - 9,
+                Offset(circleRadius, circleRadius),
+            circleRadius - 20,
             Paint()..color = Colors.white);
       }
       canvas.drawCircle(
           topLeft +
               (offset * circleRadius * 2) +
-              Offset(circleRadius - 5, circleRadius - 5),
-          circleRadius - 10,
+              Offset(circleRadius, circleRadius),
+          circleRadius - 21,
           Paint()
             ..color = Color.fromARGB(
                 0xFF, r.nextInt(0xFF), r.nextInt(0xFF), r.nextInt(0xFF)));
     }
   }
 
-  void drawObject(Size size, Offset pos, int type, int data, Canvas canvas) {
+  void drawObject(Size size, Offset pos, int type, int data, Canvas canvas) async {
     switch (type) {
       case 0:
         canvas.drawRect(
@@ -248,7 +259,9 @@ class WorldDrawer extends CustomPainter {
         );
         break;
       case 1:
-        canvas.drawRect(pos & size, Paint()..color = Colors.red);
+        //canvas.drawOval(pos & size, Paint()..color=Colors.red);
+        canvas.drawRect(pos-Offset(5, 5) & size+Offset(10, 10), Paint());
+        paintImage(canvas: canvas, rect: pos & size, image: imageInfo.image, fit: BoxFit.fill, filterQuality: FilterQuality.none);
         break;
       case 2:
         if (data == 0)
