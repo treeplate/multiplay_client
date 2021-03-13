@@ -19,37 +19,93 @@ Future<void> main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool playing = false;
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return WidgetsApp(
+      pageRouteBuilder:
+          <T>(RouteSettings settings, Widget Function(BuildContext) func) =>
+              MaterialPageRoute<T>(builder: func),
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      color: Colors.black,
+      home: playing
+          ? GameScreen(title: 'Flutter Demo Home Page')
+          : TitleScreen(() => setState(() => playing = true)),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key /*?*/ key, this.title}) : super(key: key);
+class TitleScreen extends StatelessWidget {
+  final VoidCallback startGame;
+
+  TitleScreen(this.startGame, {Key key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Wooden Doors",
+          style: TextStyle(
+            fontSize: 100,
+            color: Colors.brown,
+          ),
+        ),
+        CustomPaint(
+          child: Container(
+            width: 100,
+            height: 100,
+          ),
+          painter: WorldDrawer(
+            Size.square(1),
+            [],
+            [
+              [0, 0, 2, 0],
+            ],
+            [20, 20],
+            null,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            startGame();
+          },
+          child: Text("Start Game"),
+        ),
+      ],
+    );
+  }
+}
+
+class GameScreen extends StatefulWidget {
+  GameScreen({Key /*?*/ key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _GameScreenState createState() => _GameScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _GameScreenState extends State<GameScreen> {
   ImageInfo _imageInfo;
   void initState() {
     super.initState();
-    ExactAssetImage('pixelart/button.png').resolve(ImageConfiguration(bundle: rootBundle)).addListener(ImageStreamListener((ImageInfo imageInfo, bool syncronous) {
-      setState(() {
-        _imageInfo = imageInfo;
-      });
-    }));
+    ExactAssetImage('pixelart/button.png')
+        .resolve(ImageConfiguration(bundle: rootBundle))
+        .addListener(
+      ImageStreamListener((ImageInfo imageInfo, bool syncronous) {
+        setState(() {
+          _imageInfo = imageInfo;
+        });
+      }),
+    );
     final PacketBuffer buffer = PacketBuffer();
     server.add([playerIndex, 0]);
     server.listen((List<int> message) {
@@ -71,7 +127,8 @@ class _MyHomePageState extends State<MyHomePage> {
               String filename =
                   "audio/level_${lastLevelPlayed.toRadixString(2)}.mov";
               print("ASSET SETTING ($filename)");
-              player.setAsset(filename)
+              player
+                  .setAsset(filename)
                   .then((Duration duration) => player.play());
             }
             rawPlayers = buffer.readUint8List(playerCount * 2);
@@ -138,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
               server.add([playerIndex, 0]);
               break;
             case "-":
-              playerIndex--;
+              if (playerIndex > 0) playerIndex--;
               server.add([playerIndex, 0]);
               break;
             default:
@@ -191,9 +248,10 @@ class WorldDrawer extends CustomPainter {
 
   final Size size;
 
-  WorldDrawer(this.size, this.players, this.objects, this.goal, this.imageInfo);
-  
-  ImageInfo imageInfo;
+  WorldDrawer(
+      this.size, this.players, this.objects, this.goal, this.buttonImageInfo);
+
+  ImageInfo buttonImageInfo;
 
   @override
   void paint(Canvas canvas, Size totalSize) {
@@ -250,7 +308,8 @@ class WorldDrawer extends CustomPainter {
     }
   }
 
-  void drawObject(Size size, Offset pos, int type, int data, Canvas canvas) async {
+  void drawObject(
+      Size size, Offset pos, int type, int data, Canvas canvas) async {
     switch (type) {
       case 0:
         canvas.drawRect(
@@ -260,21 +319,19 @@ class WorldDrawer extends CustomPainter {
         break;
       case 1:
         //canvas.drawOval(pos & size, Paint()..color=Colors.red);
-        canvas.drawRect(pos-Offset(5, 5) & size+Offset(10, 10), Paint());
-        paintImage(canvas: canvas, rect: pos & size, image: imageInfo.image, fit: BoxFit.fill, filterQuality: FilterQuality.none);
+        canvas.drawRect(pos - Offset(5, 5) & size + Offset(10, 10), Paint());
+        paintImage(
+            canvas: canvas,
+            rect: pos & size,
+            image: buttonImageInfo.image,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.none);
         break;
       case 2:
         if (data == 0)
           canvas.drawLine(
-              size.bottomLeft(pos),
-              size.topLeft(pos),
-              Paint()
-                ..color = Colors.brown
-                ..strokeWidth = 10);
-        else
-          canvas.drawLine(
-              size.bottomLeft(pos),
-              size.bottomRight(pos),
+              size.bottomCenter(pos),
+              size.topCenter(pos),
               Paint()
                 ..color = Colors.brown
                 ..strokeWidth = 10);
