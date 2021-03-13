@@ -15,7 +15,8 @@ int playerIndex = 0;
 List<String> levelNames = [
   "movement_intro",
   "button_intro",
-  /*"double_button"*/ "button_intro",
+  "double_button",
+  /*"box_intro"*/ "button_intro",
 ];
 
 Future<void> main() async {
@@ -115,15 +116,17 @@ class _GameScreenState extends State<GameScreen> {
     final PacketBuffer buffer = PacketBuffer();
     server.add([playerIndex, 0]);
     server.listen((List<int> message) {
+      print("got message $message");
       buffer.add(message as Uint8List);
       if (buffer.available >= 16) {
         int playerCount = buffer.readInt64();
         int objectCount = buffer.readInt64();
         print(
-            "(${buffer.available}) 3 + $playerCount * 2 + $objectCount * 4 + 2");
+            "(${buffer.available}) hopefully >= 3 + $playerCount * 2 + $objectCount * 4 + 2");
         buffer.rewind();
         if (buffer.available >=
             16 + 3 + playerCount * 2 + objectCount * 4 + 2) {
+          print("Yes, it is.");
           buffer.readUint8List(16);
           setState(() {
             List<int> someData = buffer.readUint8List(3);
@@ -131,7 +134,7 @@ class _GameScreenState extends State<GameScreen> {
             if (lastLevelPlayed != someData[2]) {
               lastLevelPlayed = someData[2];
               String filename =
-                  "audio/level_${levelNames[lastLevelPlayed]}.mov";
+                  "audio/${levelNames[lastLevelPlayed - 1]}.mp3";
               print("ASSET SETTING ($filename)");
               player
                   .setAsset(filename)
