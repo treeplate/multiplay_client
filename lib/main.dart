@@ -12,6 +12,12 @@ AudioPlayer player;
 
 int playerIndex = 0;
 
+List<String> levelNames = [
+  "movement_intro",
+  "button_intro",
+  /*"double_button"*/ "button_intro",
+];
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   player = AudioPlayer();
@@ -125,7 +131,7 @@ class _GameScreenState extends State<GameScreen> {
             if (lastLevelPlayed != someData[2]) {
               lastLevelPlayed = someData[2];
               String filename =
-                  "audio/level_${lastLevelPlayed.toRadixString(2)}.mov";
+                  "audio/level_${levelNames[lastLevelPlayed]}.mov";
               print("ASSET SETTING ($filename)");
               player
                   .setAsset(filename)
