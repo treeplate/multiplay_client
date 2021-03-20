@@ -52,6 +52,7 @@ flutter:
     - audio/movement_intro.mp3
     - audio/double_button.mp3
     - pixelart/button.png
+    - pixelart/crate.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
