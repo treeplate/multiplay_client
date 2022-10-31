@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -84,8 +83,10 @@ class WorldTween extends Tween<WorldState> {
           throw "Unreckognized object type ${objectB[3]}";
       }
     }
-    if(begin.players.length > playerIndex) print("${begin.players[playerIndex]} !=/== ${end.players[playerIndex]}");
-    playerMoving = (begin.players.length > playerIndex) && begin.players[playerIndex] != end.players[playerIndex];
+    if (begin.players.length > playerIndex)
+      print("${begin.players[playerIndex]} !=/== ${end.players[playerIndex]}");
+    playerMoving = (begin.players.length > playerIndex) &&
+        begin.players[playerIndex] != end.players[playerIndex];
     return WorldState(
       end.size,
       begin.players
@@ -230,7 +231,8 @@ class _GameScreenState extends State<GameScreen> {
       if (buffer.available >= 16) {
         int playerCount = buffer.readInt64();
         int objectCount = buffer.readInt64();
-        print("(${buffer.available}) hopefully >= 3 + $playerCount * 2 + $objectCount * 4 + 2");
+        print(
+            "(${buffer.available}) hopefully >= 3 + $playerCount * 2 + $objectCount * 4 + 2");
         buffer.rewind();
         if (buffer.available >=
             16 + 3 + playerCount * 2 + objectCount * 5 + 2) {
@@ -324,10 +326,11 @@ class _GameScreenState extends State<GameScreen> {
                 server.add([playerIndex, 6]);
                 break;
               default:
-                return false;
+                return KeyEventResult.ignored;
             }
-          } else print("$playerMoving");
-          return true;
+          } else
+            print("$playerMoving");
+          return KeyEventResult.handled;
         },
         child: Scaffold(
           body: Stack(
@@ -510,11 +513,11 @@ class WorldDrawer extends CustomPainter {
         );
         break;
       case 3:
-        if(crateImageInfo == null) {
+        if (crateImageInfo == null) {
           canvas.drawRect(
-          pos & size,
-          Paint()..color = Colors.grey,
-        );
+            pos & size,
+            Paint()..color = Colors.grey,
+          );
         }
         paintImage(
             canvas: canvas,
