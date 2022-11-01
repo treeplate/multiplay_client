@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ import 'package:home_automation_tools/all.dart';
 import 'package:just_audio/just_audio.dart';
 
 Socket server;
-AudioPlayer player;
+AudioPlayer audioPlayer;
 
 int playerIndex = 0;
 
@@ -107,7 +106,7 @@ class WorldTween extends Tween<WorldState> {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  player = AudioPlayer();
+  audioPlayer = AudioPlayer();
   server = await Socket.connect("ceylon.rooves.house", 9000);
   runApp(MyApp());
 }
@@ -247,9 +246,9 @@ class _GameScreenState extends State<GameScreen> {
               String filename = "audio/${levelNames[lastLevelPlayed - 1]}.mp3";
               //print("ASSET SETTING ($filename)");
               if (!widget.muted)
-                player
+                audioPlayer
                     .setAsset(filename)
-                    .then((Duration duration) => player.play());
+                    .then((Duration duration) => audioPlayer.play());
             }
             rawPlayers = buffer.readUint8List(playerCount * 2);
             rawObjects = buffer.readUint8List(objectCount * 5);

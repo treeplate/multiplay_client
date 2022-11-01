@@ -24,7 +24,7 @@ dependencies:
   flutter:
     sdk: flutter
   just_audio:
-    '0.6.14+1'
+    '0.9.18'
   home_automation_tools:
     git: git://github.com/Hixie/dart-home-automation-tools.git
 
