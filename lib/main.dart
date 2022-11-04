@@ -18,6 +18,7 @@ List<String> levelNames = [
   "double_button",
   "box_intro",
   "box_puzzle",
+  "win_screen",
 ];
 
 class WorldState {
