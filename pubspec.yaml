@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -26,7 +26,7 @@ dependencies:
   just_audio:
     '0.9.18'
   home_automation_tools:
-    git: git://github.com/Hixie/dart-home-automation-tools.git
+    git: https://github.com/Hixie/dart-home-automation-tools.git
 
 
   # The following adds the Cupertino Icons font to your application.
